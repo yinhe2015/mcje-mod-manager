@@ -1,5 +1,5 @@
 # Minecraft Java Edition Mod Manager
-1.1.0
+V1.1.0
 
 ## 运行
 npm install

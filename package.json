@@ -61,11 +61,6 @@
     "files": [
       "src/**/*",
       "assets/**/*"
-    ],
-    "publish": [
-      {
-        "provider": "github"
-      }
     ]
   }
 }
