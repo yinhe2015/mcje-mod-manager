@@ -1,0 +1,57 @@
+{
+  "name": "mcje-mod-manager",
+  "version": "1.0.0",
+  "description": "Minecraft Java Edition Mod Manager",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.2"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.17",
+    "electron-log": "^5.0.0"
+  },
+  "build": {
+    "appId": "cn.yinhe.McjeModManager",
+    "productName": "Minecraft Java Edition Mod Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "icon": "assets/icon.png",
+    "mac": {
+      "target": [
+        "dir"
+      ],
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": null,
+      "entitlementsInherit": null,
+      "extendInfo": {
+        "CFBundleDisplayName": "Minecraft Java Edition Mod Manager"
+      }
+    },
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "linux": {
+      "target": [
+        "portable"
+      ],
+      "category": "Utility"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*"
+    ]
+  }
+}

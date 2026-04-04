@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Java Edition Mod Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #4ade80;
+      text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .mod-path {
+      margin: 20px 30px;
+      padding: 15px 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .mod-path span {
+      flex: 1;
+      font-family: 'Consolas', monospace;
+      color: #94a3b8;
+      word-break: break-all;
+    }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin: 0 30px 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px 20px;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .stat-card .count {
+      font-size: 28px;
+      font-weight: bold;
+      color: #4ade80;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .stat-card.disabled .count {
+      color: #f87171;
+    }
+
+    .stat-card.enabled .count {
+      color: #4ade80;
+    }
+
+    .sort-info {
+      margin: 0 30px 10px;
+      padding: 10px 15px;
+      background: rgba(59, 130, 246, 0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #93c5fd;
+    }
+
+    .sort-info code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 0 3px;
+    }
+
+    .mod-list-container {
+      margin: 0 30px 30px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      overflow: hidden;
+      max-height: calc(100vh - 320px);
+      overflow-y: auto;
+    }
+
+    .mod-list-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .mod-list-container::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .mod-list-container::-webkit-scrollbar-thumb {
+      background: rgba(74, 222, 128, 0.3);
+      border-radius: 4px;
+    }
+
+    .mod-list {
+      list-style: none;
+      padding: 10px;
+    }
+
+    .mod-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      margin: 5px 0;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      cursor: grab;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .mod-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(74, 222, 128, 0.3);
+    }
+
+    .mod-item.dragging {
+      opacity: 0.5;
+      border-color: #4ade80;
+    }
+
+    .mod-item.drag-over {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.1);
+    }
+
+    .mod-item.disabled {
+      opacity: 0.5;
+    }
+
+    .mod-checkbox {
+      margin-right: 15px;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #4ade80;
+    }
+
+    .drag-handle {
+      color: #64748b;
+      margin-right: 12px;
+      cursor: grab;
+    }
+
+    .prefix-badge {
+      min-width: 40px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      text-align: center;
+      margin-right: 12px;
+      background: rgba(74, 222, 128, 0.2);
+      color: #4ade80;
+    }
+
+    .mod-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 16px;
+    }
+
+    .mod-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mod-name {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mod-version {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .mod-meta {
+      font-size: 12px;
+      color: #64748b;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mod-meta .mod-id {
+      color: #60a5fa;
+    }
+
+    .mod-meta .mod-version {
+      color: #a78bfa;
+    }
+
+    .mod-meta .mod-loader {
+      color: #4ade80;
+      font-size: 11px;
+      padding: 1px 6px;
+      background: rgba(74, 222, 128, 0.1);
+      border-radius: 4px;
+    }
+
+    .mod-actions {
+      display: flex;
+      gap: 8px;
+      margin-left: 12px;
+    }
+
+    .action-btn {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .action-btn.links {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+    }
+
+    .action-btn.links:hover {
+      background: rgba(59, 130, 246, 0.4);
+    }
+
+    .action-btn.file {
+      background: rgba(168, 85, 247, 0.2);
+      color: #c084fc;
+    }
+
+    .action-btn.file:hover {
+      background: rgba(168, 85, 247, 0.4);
+    }
+
+    .action-btn.danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .action-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.4);
+    }
+
+    .links-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 8px;
+      min-width: 160px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      margin-top: 5px;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-menu a,
+    .dropdown-menu button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      color: #e0e0e0;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.2s;
+      font-size: 13px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-menu a:hover,
+    .dropdown-menu button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-menu .danger:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .dropdown-menu .logo {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .logo.mcwiki { background: #06b6d4; color: #000; }
+    .logo.modrinth { background: #1bd96a; color: #000; }
+    .logo.curseforge { background: #f97316; color: #000; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #94a3b8;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 15px 25px;
+      background: #1e293b;
+      border-radius: 10px;
+      color: #fff;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success {
+      border-left: 4px solid #4ade80;
+    }
+
+    .toast.error {
+      border-left: 4px solid #f87171;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Minecraft Java Edition Mod Manager</h1>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="refreshBtn">刷新</button>
+      <button class="btn btn-secondary" id="addPrefixBtn">添加数字前缀</button>
+      <button class="btn btn-primary" id="selectBtn">选择 Mod 文件夹</button>
+    </div>
+  </div>
+
+  <div class="mod-path">
+    <span>当前路径: </span>
+    <span id="currentPath">未选择文件夹</span>
+  </div>
+
+  <div class="sort-info">
+    加载顺序: 使用数字前缀 <code>N_modname.jar</code> | 拖动可调整顺序 | 勾选启用/禁用
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="count" id="totalCount">0</div>
+      <div class="label">总 Mod 数</div>
+    </div>
+    <div class="stat-card enabled">
+      <div class="count" id="enabledCount">0</div>
+      <div class="label">已启用</div>
+    </div>
+    <div class="stat-card disabled">
+      <div class="count" id="disabledCount">0</div>
+      <div class="label">已禁用</div>
+    </div>
+  </div>
+
+  <div class="mod-list-container">
+    <ul class="mod-list" id="modList"></ul>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let currentPath = '';
+    let mods = [];
+    let draggedItem = null;
+
+    const selectBtn = document.getElementById('selectBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const addPrefixBtn = document.getElementById('addPrefixBtn');
+    const modList = document.getElementById('modList');
+    const currentPathEl = document.getElementById('currentPath');
+    const totalCountEl = document.getElementById('totalCount');
+    const enabledCountEl = document.getElementById('enabledCount');
+    const disabledCountEl = document.getElementById('disabledCount');
+    const toastEl = document.getElementById('toast');
+
+    function showToast(message, type = 'success') {
+      toastEl.textContent = message;
+      toastEl.className = `toast ${type} show`;
+      setTimeout(() => toastEl.classList.remove('show'), 3000);
+    }
+
+    function renderMods() {
+      const enabled = mods.filter(m => !m.isDisabled).length;
+      const disabled = mods.filter(m => m.isDisabled).length;
+      totalCountEl.textContent = mods.length;
+      enabledCountEl.textContent = enabled;
+      disabledCountEl.textContent = disabled;
+
+      if (mods.length === 0) {
+        modList.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📦</div>
+            <h3>暂无 Mod</h3>
+            <p>请选择一个包含 .jar 文件的文件夹</p>
+          </div>
+        `;
+        return;
+      }
+
+      modList.innerHTML = mods.map((mod, index) => {
+        // 构建元数据信息
+        let metaHtml = '';
+        if (mod.id) {
+          metaHtml += `<span class="mod-id">ID: ${mod.id}</span>`;
+        }
+        if (mod.version) {
+          metaHtml += `<span class="mod-version">v${mod.version}</span>`;
+        }
+        if (mod.loader) {
+          const loaderLabels = {
+            'fabric': 'Fabric',
+            'forge': 'Forge',
+            'neoforge': 'NeoForge',
+            'quilt': 'Quilt'
+          };
+          metaHtml += `<span class="mod-loader">${loaderLabels[mod.loader] || mod.loader}</span>`;
+        }
+        if (!metaHtml) {
+          metaHtml = '<span>未知版本</span>';
+        }
+        
+        return `
+        <li class="mod-item ${mod.isDisabled ? 'disabled' : ''}" 
+            data-filename="${mod.filename}" 
+            data-index="${index}"
+            draggable="true">
+          <input type="checkbox" class="mod-checkbox" 
+                 ${!mod.isDisabled ? 'checked' : ''} 
+                 onchange="toggleMod('${mod.filename}', this.checked)">
+          <span class="drag-handle">☰</span>
+          <span class="prefix-badge">${mod.namePrefix || '?'}</span>
+          <div class="mod-icon">M</div>
+          <div class="mod-info">
+            <div class="mod-name">${mod.name}</div>
+            <div class="mod-meta">${metaHtml}</div>
+          </div>
+          <div class="mod-actions">
+            <div class="links-dropdown">
+              <button class="action-btn links" onclick="toggleDropdown(this)" title="查看链接">
+                🔗
+              </button>
+              <div class="dropdown-menu">
+                <a href="#" onclick="openLink('mcwiki', '${mod.id || mod.baseName}'); return false;">
+                  <span class="logo mcwiki">M</span> MC百科
+                </a>
+                <a href="#" onclick="openLink('modrinth', '${mod.id || mod.baseName}'); return false;">
+                  <span class="logo modrinth">M</span> Modrinth
+                </a>
+                <a href="#" onclick="openLink('curseforge', '${mod.id || mod.baseName}'); return false;">
+                  <span class="logo curseforge">C</span> CurseForge
+                </a>
+              </div>
+            </div>
+            <div class="file-dropdown">
+              <button class="action-btn file" onclick="toggleDropdown(this)" title="文件操作">
+                📁
+              </button>
+              <div class="dropdown-menu">
+                <a href="#" onclick="showInFolder('${mod.path}'); return false;">
+                  📂 在文件夹中显示
+                </a>
+                <button class="danger" onclick="deleteMod('${mod.path}', '${mod.name}')">
+                  🗑️ 删除文件
+                </button>
+              </div>
+            </div>
+          </div>
+        </li>
+      `}).join('');
+
+      setupDragAndDrop();
+    }
+
+    async function loadMods(path) {
+      currentPath = path;
+      currentPathEl.textContent = path;
+      mods = await window.api.loadMods(path);
+      renderMods();
+    }
+
+    async function toggleMod(filename, checked) {
+      const currentDisabled = filename.endsWith('.disabled');
+      const shouldBeDisabled = !checked;
+      
+      if (currentDisabled === shouldBeDisabled) return;
+      
+      const result = await window.api.toggleMod(currentPath, filename);
+      if (result.success) {
+        await loadMods(currentPath);
+      } else {
+        showToast(result.error, 'error');
+      }
+    }
+
+    function toggleDropdown(btn) {
+      const menu = btn.nextElementSibling;
+      document.querySelectorAll('.dropdown-menu').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+      });
+      menu.classList.toggle('show');
+    }
+
+    async function openLink(type, modName) {
+      await window.api.openModLink(type, modName);
+    }
+
+    async function showInFolder(filePath) {
+      const result = await window.api.showFileInFolder(filePath);
+      if (!result.success) {
+        showToast(result.error, 'error');
+      }
+      // 关闭下拉菜单
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    async function deleteMod(filePath, modName) {
+      const confirmed = confirm(`确定要删除 "${modName}" 吗？\n文件将被移动到回收站。`);
+      if (!confirmed) return;
+      
+      const result = await window.api.deleteMod(filePath);
+      if (result.success) {
+        showToast('文件已移动到回收站');
+        await loadMods(currentPath);
+      } else {
+        showToast(result.error, 'error');
+      }
+      // 关闭下拉菜单
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    }
+
+    function setupDragAndDrop() {
+      const items = document.querySelectorAll('.mod-item');
+      
+      items.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragleave', handleDragLeave);
+      });
+    }
+
+    function handleDragStart(e) {
+      draggedItem = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.mod-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+      draggedItem = null;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (this !== draggedItem) {
+        this.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave() {
+      this.classList.remove('drag-over');
+    }
+
+    async function handleDrop(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      if (this === draggedItem) return;
+
+      const draggedIdx = parseInt(draggedItem.dataset.index);
+      const droppedIdx = parseInt(this.dataset.index);
+
+      const [draggedMod] = mods.splice(draggedIdx, 1);
+      mods.splice(droppedIdx, 0, draggedMod);
+
+      renderMods();
+      
+      const orderedFiles = mods.map(m => m.filename);
+      const result = await window.api.reorderMods(currentPath, orderedFiles);
+      
+      if (result.success) {
+        await loadMods(currentPath);
+        showToast('排序已保存');
+      } else {
+        showToast(result.error, 'error');
+      }
+    }
+
+    async function addPrefixes() {
+      if (mods.length === 0) {
+        showToast('没有可处理的 Mod', 'error');
+        return;
+      }
+      
+      const orderedFiles = mods.map(m => m.filename);
+      const result = await window.api.addPrefixes(currentPath, orderedFiles);
+      
+      if (result.success) {
+        await loadMods(currentPath);
+        showToast('数字前缀添加成功');
+      } else {
+        showToast(result.error, 'error');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.links-dropdown') && !e.target.closest('.file-dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+      }
+    });
+
+    selectBtn.addEventListener('click', async () => {
+      const path = await window.api.selectFolder();
+      if (path) {
+        window.api.updateModPath(path);
+        await loadMods(path);
+      }
+    });
+
+    if (window.api && window.api.onPathChanged) {
+      window.api.onPathChanged((path) => {
+        if (path && path !== currentPath) {
+          loadMods(path);
+        }
+      });
+    }
+
+    refreshBtn.addEventListener('click', async () => {
+      if (currentPath) {
+        await loadMods(currentPath);
+        showToast('已刷新');
+      }
+    });
+
+    addPrefixBtn.addEventListener('click', addPrefixes);
+
+    renderMods();
+  </script>
+</body>
+</html>
