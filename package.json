@@ -1,12 +1,13 @@
 {
   "name": "mcje-mod-manager",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Minecraft Java Edition Mod Manager",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --enable-logging",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "build:all": "electron-builder --win --mac --linux --x64 --arm64"
   },
   "author": "",
   "license": "MIT",
@@ -27,7 +28,7 @@
     "icon": "assets/icon.png",
     "mac": {
       "target": [
-        "dir"
+        {"target": "dmg", "arch": ["x64", "arm64"]}
       ],
       "category": "public.app-category.utilities",
       "hardenedRuntime": false,
@@ -40,12 +41,20 @@
     },
     "win": {
       "target": [
-        "portable"
+        {"target": "portable", "arch": ["x64", "arm64"]},
+        {"target": "nsis", "arch": ["x64", "arm64"]}
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "linux": {
       "target": [
-        "portable"
+        {"target": "tar.gz", "arch": ["x64", "arm64"]},
+        {"target": "appImage", "arch": ["x64", "arm64"]}
       ],
       "category": "Utility"
     },
