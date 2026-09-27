@@ -1,0 +1,66 @@
+{
+  "name": "mcje-mod-manager",
+  "version": "1.1.0",
+  "description": "Minecraft Java Edition Mod Manager",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "build": "electron-builder",
+    "build:all": "electron-builder --win --mac --linux --x64 --arm64"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.2"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.17",
+    "electron-log": "^5.0.0"
+  },
+  "build": {
+    "appId": "cn.yinhe.McjeModManager",
+    "productName": "Minecraft Java Edition Mod Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "icon": "assets/icon.png",
+    "mac": {
+      "target": [
+        {"target": "dmg", "arch": ["x64", "arm64"]}
+      ],
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": null,
+      "entitlementsInherit": null,
+      "extendInfo": {
+        "CFBundleDisplayName": "Minecraft Java Edition Mod Manager"
+      }
+    },
+    "win": {
+      "target": [
+        {"target": "portable", "arch": ["x64", "arm64"]},
+        {"target": "nsis", "arch": ["x64", "arm64"]}
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": [
+        {"target": "tar.gz", "arch": ["x64", "arm64"]},
+        {"target": "appImage", "arch": ["x64", "arm64"]}
+      ],
+      "category": "Utility"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*"
+    ]
+  }
+}
